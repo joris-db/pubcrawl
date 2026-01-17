@@ -20,7 +20,6 @@
         :root {
             --glass: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.15);
-            --accent: #f59e0b;
         }
 
         body {
@@ -44,10 +43,7 @@
                 radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.1) 0px, transparent 50%),
                 radial-gradient(at 0% 100%, rgba(245, 158, 11, 0.1) 0px, transparent 50%);
             filter: blur(80px);
-            animation: meshMove 20s infinite alternate;
         }
-
-        @keyframes meshMove { from { transform: scale(1); } to { transform: scale(1.2); } }
 
         .glass {
             background: var(--glass);
@@ -57,21 +53,24 @@
         }
 
         .pub-card {
-            height: 180px;
+            height: 160px;
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.3s ease;
         }
+
+        .pub-card:active { transform: scale(0.95); }
 
         .pub-card.revealed {
             background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(236, 72, 153, 0.2));
             border-color: rgba(245, 158, 11, 0.4);
         }
 
-        .hidden-view { 
-            display: none !important; 
-            height: 0;
-            overflow: hidden;
-        }
+        .hidden-view { display: none !important; }
 
         .digital-clock {
             font-family: 'Orbitron', sans-serif;
@@ -93,75 +92,74 @@
             transform: scale(1.2);
             border: 2px solid #f59e0b;
         }
-
-        .particle {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            pointer-events: none;
-            opacity: 0.1;
-            animation: float 15s infinite linear;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(100vh); }
-            100% { transform: translateY(-10vh); }
-        }
     </style>
 </head>
 <body>
     <div class="mesh-bg"></div>
-    <div id="particles-container"></div>
 
-    <!-- NOODKNOP / DEBUG KNOP -->
-    <button onclick="forceDebugStart()" class="fixed bottom-4 right-4 z-[100] bg-red-600/90 text-white px-4 py-3 rounded-full shadow-2xl font-bold text-xs border border-white/20 hover:bg-red-500 transition active:scale-95 flex items-center gap-2">
-        <span>🛠️ NOODKNOP: FORCEER START</span>
-    </button>
-
-    <main class="max-w-xl mx-auto p-6 min-h-screen relative z-10 flex flex-col">
-        <header id="main-header" class="text-center py-8 mb-4 transition-all shrink-0">
-            <h1 class="text-3xl font-black italic tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 uppercase leading-tight">
+    <main class="max-w-xl mx-auto p-6 min-h-screen relative z-10">
+        <!-- Header -->
+        <header id="main-header" class="text-center py-8 mb-4">
+            <h1 class="text-3xl font-black italic tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 uppercase">
                 De Grote DD Pub Crawl
             </h1>
-            <p class="text-slate-400 text-xs font-bold tracking-[0.2em] mt-2 uppercase opacity-80">Wie kotst het eerst?</p>
+            <p class="text-slate-400 text-[10px] font-bold tracking-[0.2em] mt-2 uppercase opacity-80">Wie kotst het eerst?</p>
         </header>
 
-        <div id="view-grid" class="space-y-6 flex-grow">
-            <!-- Grid container met minimale hoogte zodat hij zeker ruimte inneemt -->
-            <div class="grid grid-cols-2 gap-4 min-h-[200px]" id="pub-grid">
-                <!-- Fallback tekst als JS faalt -->
-                <div class="col-span-2 text-center text-slate-500 text-xs animate-pulse mt-10">Laden van kroegen...</div>
-            </div>
-            
-            <div id="reveal-overlay" class="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-50 hidden p-6 text-center">
-                <div class="text-8xl mb-6">🍻</div>
-                <h3 class="text-sm font-bold text-yellow-500 tracking-widest uppercase mb-2">Bestemming onthuld:</h3>
-                <h2 class="text-4xl font-black text-white italic uppercase" id="reveal-name">---</h2>
-                <div class="mt-12 w-48 h-1 bg-white/10 rounded-full overflow-hidden">
-                    <div id="reveal-bar" class="h-full bg-yellow-500 transition-all duration-[1.5s]" style="width: 0%"></div>
+        <!-- Grid View (Nu direct in HTML voor maximale laad-zekerheid) -->
+        <div id="view-grid" class="space-y-6">
+            <div class="grid grid-cols-2 gap-4" id="pub-grid">
+                <!-- Kroeg 1 -->
+                <div class="pub-card glass" id="card-0" onclick="handleCardClick(0)">
+                    <div class="text-3xl mb-1 opacity-20">?</div>
+                    <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 1</h4>
+                </div>
+                <!-- Kroeg 2 -->
+                <div class="pub-card glass" id="card-1" onclick="handleCardClick(1)">
+                    <div class="text-3xl mb-1 opacity-20">?</div>
+                    <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 2</h4>
+                </div>
+                <!-- Kroeg 3 -->
+                <div class="pub-card glass" id="card-2" onclick="handleCardClick(2)">
+                    <div class="text-3xl mb-1 opacity-20">?</div>
+                    <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 3</h4>
+                </div>
+                <!-- Kroeg 4 -->
+                <div class="pub-card glass" id="card-3" onclick="handleCardClick(3)">
+                    <div class="text-3xl mb-1 opacity-20">?</div>
+                    <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 4</h4>
+                </div>
+                <!-- Kroeg 5 -->
+                <div class="pub-card glass" id="card-4" onclick="handleCardClick(4)">
+                    <div class="text-3xl mb-1 opacity-20">?</div>
+                    <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 5</h4>
+                </div>
+                <!-- Kroeg 6 -->
+                <div class="pub-card glass" id="card-5" onclick="handleCardClick(5)">
+                    <div class="text-3xl mb-1 opacity-20">?</div>
+                    <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 6</h4>
                 </div>
             </div>
         </div>
 
+        <!-- Detail View -->
         <div id="view-detail" class="hidden-view space-y-6 pb-24">
-            <button onclick="showGrid()" class="glass px-5 py-2.5 flex items-center gap-2 text-xs font-black text-slate-300 hover:text-white transition uppercase tracking-wider">
-                <span>←</span> Dashboard
+            <button onclick="showGrid()" class="glass px-5 py-2.5 flex items-center gap-2 text-xs font-black text-slate-300 uppercase tracking-wider">
+                ← Terug
             </button>
 
             <div class="glass p-8 text-center bg-gradient-to-b from-white/5 to-transparent">
                 <h2 id="detail-pub-name" class="text-3xl font-black text-white italic mb-3 uppercase tracking-tight">KROEG NAAM</h2>
-                <div class="flex items-center justify-center gap-4">
-                    <div class="glass px-4 py-2 flex items-center gap-3">
-                        <span class="text-yellow-500 font-bold text-xs uppercase">Aankomst</span>
-                        <span id="detail-time" class="digital-clock text-xl text-white">00:00</span>
-                    </div>
+                <div id="detail-time-box" class="glass px-4 py-2 inline-flex items-center gap-3">
+                    <span class="text-yellow-500 font-bold text-xs uppercase">Aankomst</span>
+                    <span id="detail-time" class="digital-clock text-xl text-white">--:--</span>
                 </div>
             </div>
 
             <div class="glass p-6 space-y-8">
                 <div id="score-container" class="space-y-6"></div>
                 <div class="pt-6 border-t border-white/10">
-                    <label class="block text-[10px] font-black uppercase text-slate-500 mb-3 tracking-widest">Extra Score (Wildcard)</label>
+                    <label class="block text-[10px] font-black uppercase text-slate-500 mb-3 tracking-widest">Wildcard Score</label>
                     <input type="text" id="wildcard-name" placeholder="Wat maakt deze kroeg uniek?" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:outline-none focus:border-yellow-500 transition mb-4 text-white">
                     <div id="wildcard-rating" class="flex justify-center"></div>
                 </div>
@@ -174,31 +172,25 @@
                 <div id="drinks-container" class="space-y-6"></div>
             </div>
 
-            <div class="glass p-6">
-                <h3 class="font-black text-xs uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-blue-500"></span> Opmerkingen
-                </h3>
-                <textarea id="pub-notes" rows="3" placeholder="is er al gekotst?" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:outline-none focus:border-yellow-500 transition text-white"></textarea>
-            </div>
-
-            <button onclick="saveCurrentPub()" class="w-full bg-yellow-500 text-black font-black py-5 rounded-2xl shadow-[0_10px_30px_rgba(245,158,11,0.3)] active:scale-95 transition-all uppercase tracking-widest">
-                Opslaan & Dashboard
+            <button onclick="saveCurrentPub()" class="w-full bg-yellow-500 text-black font-black py-5 rounded-2xl shadow-xl uppercase tracking-widest">
+                Opslaan & Klaar
             </button>
         </div>
     </main>
 
+    <!-- Reveal Overlay -->
+    <div id="reveal-overlay" class="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-50 hidden p-6 text-center">
+        <div class="text-8xl mb-6">🍻</div>
+        <h3 class="text-sm font-bold text-yellow-500 tracking-widest uppercase mb-2">Bestemming onthuld:</h3>
+        <h2 class="text-4xl font-black text-white italic uppercase" id="reveal-name">---</h2>
+        <div class="mt-12 w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+            <div id="reveal-bar" class="h-full bg-yellow-500 transition-all duration-[1.5s]" style="width: 0%"></div>
+        </div>
+    </div>
+
     <script>
-        const firebaseConfig = JSON.parse(__firebase_config);
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'dd-pub-crawl-2024';
-
-        const drumrollAudio = new Audio('https://www.soundjay.com/misc/sounds/drum-roll-01.mp3');
-        const applauseAudio = new Audio('https://www.soundjay.com/human/sounds/applause-01.mp3');
-
+        // CONFIGURATIE
         const PERSON_FACES = ['persoon1.png', 'persoon2.png', 'persoon3.png', 'persoon4.png'];
-
         const PUB_NAMES = ["Kroeg 1", "Kroeg 2", "Kroeg 3", "Kroeg 4", "Kroeg 5", "Kroeg 6"];
         const SCORE_CATEGORIES = [
             { id: 'glass', label: 'Glasdikte' },
@@ -210,272 +202,207 @@
         const DRINK_TYPES = [
             { id: 'pils', label: 'Pils', icon: '🍺' },
             { id: 'speciaal', label: 'Speciaalbier', icon: '🍻' },
-            { id: 'rode_wijn', label: 'Rode wijn', icon: '🍷' },
-            { id: 'witte_wijn', label: 'Witte wijn', icon: '🥂' },
+            { id: 'wijn', label: 'Wijn', icon: '🍷' },
             { id: 'cocktail', label: 'Cocktail', icon: '🍸' },
             { id: 'fris', label: 'Fris', icon: '🥤' }
         ];
 
+        // STATE
         let state = { pubs: {}, currentPubId: null };
-        const tourDocRef = db.doc(`artifacts/${appId}/public/data/tourData/currentTour`);
+        let db = null;
+        let tourDocRef = null;
 
-        async function init() {
-            // Render direct leeg grid om te voorkomen dat scherm leeg blijft
-            renderGrid();
-            createParticles();
-
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await auth.signInWithCustomToken(__initial_auth_token);
-                } else {
-                    await auth.signInAnonymously();
-                }
-                tourDocRef.onSnapshot((doc) => {
-                    if (doc.exists) state.pubs = doc.data().pubs || {};
-                    renderGrid();
-                    if (state.currentPubId !== null) renderDetail(state.currentPubId);
-                });
-            } catch (e) { 
-                console.error("Init failed:", e);
-                // Bij fout: toch grid renderen
-                renderGrid();
-            }
-        }
-
-        // --- NOODKNOP FUNCTIE ---
-        function forceDebugStart() {
-            // Forceer dummy data voor kroeg 1
-            if (!state.pubs[0]) {
-                state.pubs[0] = {
-                    revealed: true,
-                    arrival: '12:00',
-                    scores: { glass:5, vibe:5, drinks:5, snacks:5, wow:5 },
-                    drinks: {},
-                    drinkDetails: {},
-                    wildcardName: '', wildcardScore: 0, notes: ''
-                };
-            }
-            state.pubs[0].revealed = true; // Zeker weten dat hij open is
+        // INITIALISATIE
+        function init() {
+            console.log("App start...");
             
-            // Forceer render en switch
-            console.log("Forcing debug start...");
-            renderGrid(); // Update grid state
-            switchToDetail(0); // Ga naar detail
+            // Probeer Firebase te laden, maar ga door als het faalt
+            try {
+                if (typeof __firebase_config !== 'undefined') {
+                    const config = JSON.parse(__firebase_config);
+                    firebase.initializeApp(config);
+                    db = firebase.firestore();
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-pubcrawl';
+                    tourDocRef = db.doc(`artifacts/${appId}/public/data/tourData/currentTour`);
+                    
+                    firebase.auth().signInAnonymously().then(() => {
+                        tourDocRef.onSnapshot(doc => {
+                            if (doc.exists) {
+                                state.pubs = doc.data().pubs || {};
+                                updateAllCards();
+                                if (state.currentPubId !== null) renderDetail(state.currentPubId);
+                            }
+                        });
+                    });
+                }
+            } catch (e) {
+                console.warn("Firebase niet actief, app draait lokaal.");
+            }
+
+            updateAllCards();
         }
 
-        function renderGrid() {
-            const grid = document.getElementById('pub-grid');
-            if (!grid) return;
-            grid.innerHTML = '';
+        // UI FUNCTIES
+        function updateAllCards() {
             for (let i = 0; i < 6; i++) {
+                const card = document.getElementById(`card-${i}`);
                 const pub = state.pubs[i];
-                const card = document.createElement('div');
-                card.className = `pub-card glass flex flex-col items-center justify-center p-6 text-center transition-all ${pub?.revealed ? 'revealed' : ''}`;
-                card.onclick = () => handleCardClick(i);
-                
-                if (pub?.revealed) {
+                if (pub && pub.revealed) {
+                    card.classList.add('revealed');
                     card.innerHTML = `
                         <div class="text-2xl mb-2">🥂</div>
                         <h4 class="font-black italic uppercase text-xs text-white">${PUB_NAMES[i]}</h4>
-                        <div class="mt-3 px-2 py-1 bg-yellow-500/20 rounded text-[9px] font-black text-yellow-500 uppercase">
-                            Score: ${calculateTotal(pub)}
-                        </div>`;
-                } else {
-                    card.innerHTML = `<div class="text-3xl mb-1 opacity-20">?</div><h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop ${i + 1}</h4>`;
+                        <div class="mt-2 text-[9px] text-yellow-500 font-bold uppercase">Bekijken →</div>
+                    `;
                 }
-                grid.appendChild(card);
             }
         }
 
-        function createFaceRating(catId, currentVal, targetEl, pubIndex, catIndex, isWildcard = false) {
-            let label = isWildcard ? "Wildcard Score" : SCORE_CATEGORIES.find(c => c.id === catId)?.label || catId;
-            const faceIndex = (pubIndex + catIndex) % PERSON_FACES.length;
-            const faceUrl = PERSON_FACES[faceIndex];
-
-            let html = `<div class="w-full">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-[11px] font-black uppercase text-slate-300 tracking-wider">${label}</span>
-                    <span class="text-yellow-500 font-black text-sm shrink-0 ml-2">${currentVal}</span>
-                </div>
-                <div class="flex justify-between bg-white/5 p-2 rounded-xl border border-white/5 items-center">`;
-            for (let i = 1; i <= 10; i++) {
-                html += `<img src="${faceUrl}" 
-                              onclick="event.stopPropagation(); updateScore('${isWildcard ? 'wildcardScore' : catId}', ${i})" 
-                              class="face-rating-img cursor-pointer ${i <= currentVal ? 'active' : ''}" 
-                              alt="rate">`;
+        function handleCardClick(id) {
+            if (state.pubs[id] && state.pubs[id].revealed) {
+                switchToDetail(id);
+            } else {
+                startReveal(id);
             }
-            html += `</div></div>`;
-            targetEl.innerHTML = html;
         }
 
-        function renderDetail(id) {
-            const pub = state.pubs[id] || { scores: {}, drinks: {}, drinkDetails: {} };
-            document.getElementById('detail-pub-name').innerText = PUB_NAMES[id];
-            document.getElementById('detail-time').innerText = pub.arrival || '--:--';
-            document.getElementById('wildcard-name').value = pub.wildcardName || '';
-            document.getElementById('pub-notes').value = pub.notes || '';
-
-            const scoreCont = document.getElementById('score-container');
-            scoreCont.innerHTML = '';
-            
-            SCORE_CATEGORIES.forEach((cat, index) => {
-                const row = document.createElement('div');
-                createFaceRating(cat.id, pub.scores?.[cat.id] || 0, row, parseInt(id), index);
-                scoreCont.appendChild(row);
-            });
-            createFaceRating('wildcardScore', pub.wildcardScore || 0, document.getElementById('wildcard-rating'), parseInt(id), SCORE_CATEGORIES.length, true);
-
-            const drinkCont = document.getElementById('drinks-container');
-            drinkCont.innerHTML = '';
-            DRINK_TYPES.forEach(drink => {
-                const count = pub.drinks?.[drink.id] || 0;
-                const details = pub.drinkDetails?.[drink.id] || [];
-                const div = document.createElement('div');
-                div.className = "space-y-3";
-                
-                let detailsHtml = '';
-                for(let i=0; i < count; i++) {
-                    detailsHtml += `
-                    <input type="text" 
-                        placeholder="Wat voor ${drink.label.toLowerCase()}?" 
-                        value="${details[i] || ''}" 
-                        onchange="updateDrinkDetail('${drink.id}', ${i}, this.value)"
-                        class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-yellow-500 outline-none transition">`;
-                }
-
-                div.innerHTML = `
-                    <div class="flex items-center justify-between glass px-4 py-3 border-white/5 bg-white/5">
-                        <div class="flex items-center gap-3">
-                            <span class="text-xl">${drink.icon}</span>
-                            <span class="font-black text-[10px] uppercase text-slate-200">${drink.label}</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button onclick="updateDrink('${drink.id}', -1)" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center font-bold border border-white/10">-</button>
-                            <span class="font-black text-lg w-6 text-center digital-clock">${count}</span>
-                            <button onclick="updateDrink('${drink.id}', 1)" class="w-8 h-8 rounded-lg bg-yellow-500 text-black flex items-center justify-center font-black">+</button>
-                        </div>
-                    </div>
-                    <div class="pl-4 space-y-2">${detailsHtml}</div>
-                `;
-                drinkCont.appendChild(div);
-            });
-        }
-
-        async function handleCardClick(id) {
-            if (state.pubs[id]?.revealed) {
-                if (!state.pubs[id].arrival || state.pubs[id].arrival === '--:--') {
-                    state.pubs[id].arrival = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    await syncState();
-                }
-                return switchToDetail(id);
-            }
-            
+        function startReveal(id) {
             const overlay = document.getElementById('reveal-overlay');
             const bar = document.getElementById('reveal-bar');
+            const name = document.getElementById('reveal-name');
+            
             overlay.classList.remove('hidden');
-            document.getElementById('reveal-name').innerText = "KROEG " + (id + 1);
+            name.innerText = "KROEG " + (id + 1);
             bar.style.width = '0%';
 
-            drumrollAudio.currentTime = 0;
-            drumrollAudio.play().catch(e => console.log("Audio play blocked"));
-
             setTimeout(() => bar.style.width = '100%', 100);
-            
-            setTimeout(async () => {
-                document.getElementById('reveal-name').innerText = PUB_NAMES[id];
-                drumrollAudio.pause();
-                applauseAudio.currentTime = 0;
-                applauseAudio.play().catch(e => console.log("Audio play blocked"));
-                if ('vibrate' in navigator) navigator.vibrate([100, 50, 200]);
 
-                setTimeout(async () => {
+            setTimeout(() => {
+                name.innerText = PUB_NAMES[id];
+                setTimeout(() => {
                     overlay.classList.add('hidden');
                     state.pubs[id] = {
                         revealed: true,
-                        arrival: '--:--', 
-                        scores: { glass:0, vibe:0, drinks:0, snacks:0, wow:0 },
+                        arrival: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        scores: {},
                         drinks: {},
-                        drinkDetails: {},
-                        wildcardName: '', wildcardScore: 0, notes: ''
+                        wildcardScore: 0
                     };
-                    await syncState();
-                    renderGrid();
-                }, 1800);
+                    updateAllCards();
+                    switchToDetail(id);
+                    saveToFirebase();
+                }, 1500);
             }, 1500);
         }
 
         function switchToDetail(id) {
             state.currentPubId = id;
             document.getElementById('view-grid').classList.add('hidden-view');
-            document.getElementById('main-header').classList.add('opacity-0', 'h-0', 'overflow-hidden');
+            document.getElementById('main-header').classList.add('hidden-view');
             document.getElementById('view-detail').classList.remove('hidden-view');
-            window.scrollTo(0, 0); 
             renderDetail(id);
+            window.scrollTo(0, 0);
         }
 
         function showGrid() {
             state.currentPubId = null;
             document.getElementById('view-detail').classList.add('hidden-view');
-            document.getElementById('main-header').classList.remove('opacity-0', 'h-0', 'overflow-hidden');
             document.getElementById('view-grid').classList.remove('hidden-view');
-            window.scrollTo(0, 0); 
-            renderGrid();
+            document.getElementById('main-header').classList.remove('hidden-view');
+            updateAllCards();
         }
 
-        function updateScore(catId, val) {
-            if (catId === 'wildcardScore') state.pubs[state.currentPubId].wildcardScore = val;
-            else state.pubs[state.currentPubId].scores[catId] = val;
-            renderDetail(state.currentPubId);
+        function renderDetail(id) {
+            const pub = state.pubs[id] || { scores: {}, drinks: {} };
+            document.getElementById('detail-pub-name').innerText = PUB_NAMES[id];
+            document.getElementById('detail-time').innerText = pub.arrival || '--:--';
+            document.getElementById('wildcard-name').value = pub.wildcardName || '';
+
+            // Scores
+            const scoreCont = document.getElementById('score-container');
+            scoreCont.innerHTML = '';
+            SCORE_CATEGORIES.forEach((cat, idx) => {
+                const div = document.createElement('div');
+                const face = PERSON_FACES[(id + idx) % PERSON_FACES.length];
+                const currentVal = pub.scores[cat.id] || 0;
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-black uppercase text-slate-400">${cat.label}</span>
+                        <span class="text-yellow-500 font-bold">${currentVal}</span>
+                    </div>
+                    <div class="flex justify-between bg-white/5 p-2 rounded-xl">
+                        ${[1,2,3,4,5,6,7,8,9,10].map(v => `
+                            <img src="${face}" onclick="setScore('${cat.id}', ${v})" 
+                                 class="face-rating-img ${v <= currentVal ? 'active' : ''}">
+                        `).join('')}
+                    </div>
+                `;
+                scoreCont.appendChild(div);
+            });
+
+            // Wildcard Rating
+            const wcFace = PERSON_FACES[(id + 5) % PERSON_FACES.length];
+            const wcVal = pub.wildcardScore || 0;
+            document.getElementById('wildcard-rating').innerHTML = `
+                <div class="flex justify-between bg-white/5 p-2 rounded-xl w-full">
+                    ${[1,2,3,4,5,6,7,8,9,10].map(v => `
+                        <img src="${wcFace}" onclick="setScore('wildcardScore', ${v})" 
+                             class="face-rating-img ${v <= wcVal ? 'active' : ''}">
+                    `).join('')}
+                </div>
+            `;
+
+            // Drinks
+            const drinkCont = document.getElementById('drinks-container');
+            drinkCont.innerHTML = '';
+            DRINK_TYPES.forEach(drink => {
+                const count = pub.drinks[drink.id] || 0;
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between glass px-4 py-3";
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">${drink.icon}</span>
+                        <span class="font-black text-[10px] uppercase">${drink.label}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="setDrink('${drink.id}', -1)" class="w-8 h-8 rounded-lg bg-white/5 border border-white/10">-</button>
+                        <span class="font-black text-lg w-6 text-center">${count}</span>
+                        <button onclick="setDrink('${drink.id}', 1)" class="w-8 h-8 rounded-lg bg-yellow-500 text-black font-black">+</button>
+                    </div>
+                `;
+                drinkCont.appendChild(div);
+            });
         }
 
-        function updateDrink(drinkId, delta) {
+        // DATA FUNCTIES
+        function setScore(catId, val) {
             const pub = state.pubs[state.currentPubId];
-            if(!pub.drinks) pub.drinks = {};
-            if(!pub.drinkDetails) pub.drinkDetails = {};
-            const current = pub.drinks[drinkId] || 0;
-            const newVal = Math.max(0, current + delta);
-            pub.drinks[drinkId] = newVal;
-            if(!pub.drinkDetails[drinkId]) pub.drinkDetails[drinkId] = [];
-            if(delta > 0) pub.drinkDetails[drinkId].push("");
-            else if(delta < 0) pub.drinkDetails[drinkId].pop();
+            if (catId === 'wildcardScore') pub.wildcardScore = val;
+            else pub.scores[catId] = val;
             renderDetail(state.currentPubId);
         }
 
-        function updateDrinkDetail(drinkId, index, text) {
-            state.pubs[state.currentPubId].drinkDetails[drinkId][index] = text;
+        function setDrink(drinkId, delta) {
+            const pub = state.pubs[state.currentPubId];
+            const current = pub.drinks[drinkId] || 0;
+            pub.drinks[drinkId] = Math.max(0, current + delta);
+            renderDetail(state.currentPubId);
         }
 
-        async function saveCurrentPub() {
+        function saveCurrentPub() {
             const pub = state.pubs[state.currentPubId];
             pub.wildcardName = document.getElementById('wildcard-name').value;
-            pub.notes = document.getElementById('pub-notes').value;
-            await syncState();
+            saveToFirebase();
             showGrid();
         }
 
-        async function syncState() {
-            if (!auth.currentUser) return;
-            await tourDocRef.set({ pubs: state.pubs }, { merge: true });
-        }
-
-        function calculateTotal(pub) {
-            if (!pub?.scores) return 0;
-            const s = pub.scores;
-            let total = (s.glass||0)+(s.vibe||0)+(s.drinks||0)+(s.snacks||0)+(s.wow||0)+(pub.wildcardScore||0);
-            return (total / 6).toFixed(1);
-        }
-
-        function createParticles() {
-            const container = document.getElementById('particles-container');
-            for (let i = 0; i < 20; i++) {
-                const p = document.createElement('div');
-                p.className = 'particle';
-                p.style.width = (Math.random()*4+1)+'px'; p.style.height = p.style.width;
-                p.style.left = Math.random()*100+'vw'; p.style.bottom = "-5vh";
-                p.style.animationDelay = Math.random()*15+'s';
-                container.appendChild(p);
+        function saveToFirebase() {
+            if (tourDocRef) {
+                tourDocRef.set({ pubs: state.pubs }, { merge: true }).catch(e => console.error("Save error:", e));
             }
         }
+
         window.onload = init;
     </script>
 </body>
