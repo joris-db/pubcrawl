@@ -13,7 +13,6 @@
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
-    <!-- Confetti Library -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -93,6 +92,26 @@
             transform: scale(1.2);
             border: 2px solid #f59e0b;
         }
+
+        #reveal-overlay .route-box {
+            animation: slideUp 0.5s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Result Popup Animations */
+        .popup-scale {
+            animation: popupScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popupScale {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -110,30 +129,7 @@
         <!-- Grid View -->
         <div id="view-grid" class="space-y-6">
             <div class="grid grid-cols-2 gap-4" id="pub-grid">
-                <div class="pub-card glass" id="card-0" onclick="handleCardClick(0)">
-                    <div class="text-3xl mb-1 opacity-20">?</div>
-                    <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 1</h4>
-                </div>
-                <div class="pub-card glass" id="card-1" onclick="handleCardClick(1)">
-                    <div class="text-3xl mb-1 opacity-20">?</div>
-                    <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 2</h4>
-                </div>
-                <div class="pub-card glass" id="card-2" onclick="handleCardClick(2)">
-                    <div class="text-3xl mb-1 opacity-20">?</div>
-                    <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 3</h4>
-                </div>
-                <div class="pub-card glass" id="card-3" onclick="handleCardClick(3)">
-                    <div class="text-3xl mb-1 opacity-20">?</div>
-                    <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 4</h4>
-                </div>
-                <div class="pub-card glass" id="card-4" onclick="handleCardClick(4)">
-                    <div class="text-3xl mb-1 opacity-20">?</div>
-                    <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 5</h4>
-                </div>
-                <div class="pub-card glass" id="card-5" onclick="handleCardClick(5)">
-                    <div class="text-3xl mb-1 opacity-20">?</div>
-                    <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 6</h4>
-                </div>
+                <!-- Wordt gegenereerd door JS -->
             </div>
         </div>
 
@@ -144,7 +140,12 @@
             </button>
 
             <div class="glass p-8 text-center bg-gradient-to-b from-white/5 to-transparent">
+                <div id="wildcard-name-input-container" class="hidden mb-4">
+                    <label class="block text-[10px] font-black uppercase text-yellow-500 mb-2 tracking-widest">Voer kroegnaam in</label>
+                    <input type="text" id="detail-pub-name-input" oninput="updateWildcardName(this.value)" placeholder="Naam van de verrassing..." class="w-full bg-black/40 border border-yellow-500/30 rounded-xl px-4 py-3 text-center text-xl font-black italic uppercase text-white focus:outline-none focus:border-yellow-500 transition">
+                </div>
                 <h2 id="detail-pub-name" class="text-3xl font-black text-white italic mb-3 uppercase tracking-tight">KROEG NAAM</h2>
+                
                 <div id="detail-time-box" class="glass px-4 py-2 inline-flex items-center gap-3">
                     <span class="text-yellow-500 font-bold text-xs uppercase">Aankomst</span>
                     <span id="detail-time" class="digital-clock text-xl text-white">--:--</span>
@@ -155,7 +156,7 @@
                 <div id="score-container" class="space-y-6"></div>
                 <div class="pt-6 border-t border-white/10">
                     <label class="block text-[10px] font-black uppercase text-slate-500 mb-3 tracking-widest">Wildcard Score</label>
-                    <input type="text" id="wildcard-name" placeholder="Wat maakt deze kroeg uniek?" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:outline-none focus:border-yellow-500 transition mb-4 text-white">
+                    <input type="text" id="wildcard-comment" placeholder="Wat maakt deze kroeg uniek?" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:outline-none focus:border-yellow-500 transition mb-4 text-white">
                     <div id="wildcard-rating" class="flex justify-center"></div>
                 </div>
             </div>
@@ -173,28 +174,102 @@
         </div>
     </main>
 
+    <!-- Result Popup -->
+    <div id="score-popup" class="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-6 hidden">
+        <div class="glass p-8 max-w-sm w-full text-center popup-scale border-yellow-500/50">
+            <div id="score-emoji" class="text-6xl mb-4">🏆</div>
+            <h3 class="text-yellow-500 font-black uppercase tracking-widest text-xs mb-2">Eindresultaat</h3>
+            <h2 id="score-pub-name" class="text-2xl font-black text-white italic uppercase mb-1">KROEG NAAM</h2>
+            <div class="my-6">
+                <span id="score-value" class="text-7xl font-black italic tracking-tighter text-white">0.0</span>
+            </div>
+            <p id="score-message" class="text-slate-400 text-sm italic mb-8">Een legendarische score!</p>
+            <button onclick="closeScorePopup()" class="w-full bg-white text-black font-black py-4 rounded-xl uppercase tracking-widest text-sm">
+                Door naar de volgende
+            </button>
+        </div>
+    </div>
+
     <!-- Reveal Overlay -->
     <div id="reveal-overlay" class="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-50 hidden p-6 text-center">
         <div id="reveal-icon" class="text-8xl mb-6">🥁</div>
         <h3 id="reveal-subtitle" class="text-sm font-bold text-yellow-500 tracking-widest uppercase mb-2">Moment geduld...</h3>
-        <h2 class="text-4xl font-black text-white italic uppercase" id="reveal-name">Tromgeroffel...</h2>
-        <div class="mt-12 w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+        <h2 class="text-4xl font-black text-white italic uppercase mb-4" id="reveal-name">Tromgeroffel...</h2>
+        
+        <!-- Routebeschrijving in Overlay -->
+        <div id="reveal-route-box" class="route-box hidden max-w-sm glass p-4 border-blue-500/30 bg-blue-500/10 mb-6">
+            <div class="flex items-start gap-3 text-left">
+                <span class="text-xl">📍</span>
+                <div>
+                    <p id="reveal-address-text" class="text-[10px] font-black text-blue-400 uppercase tracking-tighter mb-1"></p>
+                    <p id="reveal-route-text" class="text-[12px] leading-relaxed text-blue-100 font-medium italic"></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="reveal-progress-container" class="mt-12 w-48 h-1 bg-white/10 rounded-full overflow-hidden">
             <div id="reveal-bar" class="h-full bg-yellow-500 transition-all duration-[3s] ease-linear" style="width: 0%"></div>
         </div>
+
+        <button id="close-reveal-btn" onclick="closeReveal()" class="hidden mt-8 px-8 py-3 bg-white text-black font-black uppercase tracking-widest rounded-full">
+            Laten we gaan!
+        </button>
     </div>
 
     <script>
-        // AUDIO RESOURCES
-        // Jouw geüploade suspense link van GitHub
+        // AUDIO
         const drumrollAudio = new Audio('https://github.com/joris-db/pubcrawl/raw/refs/heads/main/drumroll.mp3'); 
         drumrollAudio.preload = "auto";
-        
         const applauseAudio = new Audio('https://www.soundjay.com/human/sounds/applause-01.mp3');
         applauseAudio.preload = "auto";
+        // Gebruik je eigen 'tsja' geluid voor de medium score
+        const mediumAudio = new Audio('https://github.com/joris-db/pubcrawl/raw/refs/heads/main/tsja.mp3');
+        mediumAudio.preload = "auto";
+        const badAudio = new Audio('https://www.soundjay.com/misc/sounds/fail-trombone-01.mp3');
+        badAudio.preload = "auto";
 
-        // CONFIGURATIE
+        // DATA AMSTERDAM MET GEPERSONALISEERDE ROUTES
+        const PUB_DATA = [
+            { 
+                name: "Bar Shaffy", 
+                address: "Nieuwe Vijzelstraat 1",
+                icon: "🍷",
+                route: "Startpunt! Verzamelen bij de ingang op de hoek van de Nieuwe Vijzelstraat." 
+            },
+            { 
+                name: "Café Eddy Bar", 
+                address: "Gerard Doustraat 58",
+                icon: "🍺",
+                route: "Verlaat Bar Shaffy en loop de Vijzelgracht af (richting de Pijp). Steek de Stadhouderskade over en ga rechtdoor de Ferdinand Bolstraat in. Sla bij de eerste zijstraat linksaf de Gerard Doustraat in. De Eddy Bar zit na 100 meter aan de rechterkant." 
+            },
+            { 
+                name: "Gambrinus", 
+                address: "Ferdinand Bolstraat 180",
+                icon: "🥨",
+                route: "Loop de Gerard Doustraat terug naar de Ferdinand Bolstraat en sla linksaf. Loop 5 minuten rechtdoor (voorbij de Albert Cuyp). Gambrinus vind je op de hoek aan je linkerkant." 
+            },
+            { 
+                name: "Chris Scholten", 
+                address: "Van Woustraat 104",
+                icon: "🍻",
+                route: "Loop vanaf Gambrinus over de Ferdinand Bolstraat naar metrostation De Pijp. Sla hier rechtsaf de Ceintuurbaan op en volg deze langs het Sarphatipark tot de kruising met de Van Woustraat. Café Chris Scholten bevindt zich direct op de hoek." 
+            },
+            { 
+                name: "Café de Baron", 
+                address: "Tweede Jacob van Campenstraat 150H",
+                icon: "🍸",
+                route: "Steek vanaf Chris Scholten de Ceintuurbaan over de Van Woustraat in en neem de eerste zijstraat links, de Tweede Jan Steenstraat. Sla aan het einde van de straat rechtsaf de Eerste Sweelinckstraat op. Loop rechtdoor over de Albert Cuypmarkt tot aan de hoek van de Gerard Doustraat, waar Café de Baron ligt." 
+            },
+            { 
+                name: "WILD CARD", 
+                address: "Locatie Onbekend",
+                icon: "🎲",
+                route: "De laatste stop bepalen jullie zelf! Zoek een kroeg in de buurt of ga terug naar je favoriet.", 
+                isWildcard: true 
+            }
+        ];
+
         const PERSON_FACES = ['persoon1.png', 'persoon2.png', 'persoon3.png', 'persoon4.png'];
-        const PUB_NAMES = ["Kroeg 1", "Kroeg 2", "Kroeg 3", "Kroeg 4", "Kroeg 5", "Kroeg 6"];
         const SCORE_CATEGORIES = [
             { id: 'glass', label: 'Glasdikte' },
             { id: 'vibe', label: 'Amusement' },
@@ -203,11 +278,11 @@
             { id: 'wow', label: 'Wow factor' }
         ];
         const DRINK_TYPES = [
-            { id: 'pils', label: 'Pils', icon: '🍺' },
-            { id: 'speciaal', label: 'Speciaalbier', icon: '🍻' },
-            { id: 'wijn', label: 'Wijn', icon: '🍷' },
-            { id: 'cocktail', label: 'Cocktail', icon: '🍸' },
-            { id: 'fris', label: 'Fris', icon: '🥤' }
+            { id: 'pils', label: 'Pils', icon: '🍺', article: 'Welke' },
+            { id: 'speciaal', label: 'Speciaalbier', icon: '🍻', article: 'Welk' },
+            { id: 'wijn', label: 'Wijn', icon: '🍷', article: 'Welke' },
+            { id: 'cocktail', label: 'Cocktail', icon: '🍸', article: 'Welke' },
+            { id: 'fris', label: 'Fris', icon: '🥤', article: 'Welke' }
         ];
 
         // STATE
@@ -229,15 +304,45 @@
                             if (doc.exists) {
                                 state.pubs = doc.data().pubs || {};
                                 updateAllCards();
-                                if (state.currentPubId !== null) renderDetail(state.currentPubId);
                             }
-                        }, err => console.error("Snapshot error:", err));
+                        });
                     });
                 }
-            } catch (e) {
-                console.warn("Firebase niet actief.");
-            }
+            } catch (e) { console.warn("Firebase fallback"); }
             updateAllCards();
+        }
+
+        function updateAllCards() {
+            const grid = document.getElementById('pub-grid');
+            if(!grid) return;
+            grid.innerHTML = '';
+            for (let i = 0; i < 6; i++) {
+                const pub = state.pubs[i];
+                const card = document.createElement('div');
+                card.id = `card-${i}`;
+                card.onclick = () => handleCardClick(i);
+                
+                if (pub && pub.revealed) {
+                    card.className = "pub-card glass revealed";
+                    const displayName = (i === 5 && pub.wildcardName) ? pub.wildcardName : PUB_DATA[i].name;
+                    const avg = getAverage(pub);
+                    const icon = PUB_DATA[i].icon || "🥂";
+                    card.innerHTML = `
+                        <div class="text-2xl mb-1">${icon}</div>
+                        <h4 class="font-black italic uppercase text-[11px] text-white px-2 leading-tight">${displayName}</h4>
+                        <div class="mt-2 px-3 py-1 bg-yellow-500/20 rounded-full border border-yellow-500/30">
+                            <span class="text-[9px] font-black text-yellow-500">${avg > 0 ? 'SCORE: ' + avg : 'SCOREN'}</span>
+                        </div>
+                    `;
+                } else {
+                    card.className = "pub-card glass";
+                    card.innerHTML = `
+                        <div class="text-3xl mb-1 opacity-20">?</div>
+                        <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop ${i+1}</h4>
+                    `;
+                }
+                grid.appendChild(card);
+            }
         }
 
         function getAverage(pub) {
@@ -245,45 +350,12 @@
             let scores = Object.values(pub.scores).filter(v => v > 0);
             let sum = scores.reduce((a, b) => a + b, 0);
             let count = scores.length;
-            
-            if (pub.wildcardScore && pub.wildcardScore > 0) {
-                sum += pub.wildcardScore;
-                count += 1;
-            }
-            
+            if (pub.wildcardScore && pub.wildcardScore > 0) { sum += pub.wildcardScore; count += 1; }
             return count > 0 ? (sum / count).toFixed(1) : 0;
-        }
-
-        function updateAllCards() {
-            for (let i = 0; i < 6; i++) {
-                const card = document.getElementById(`card-${i}`);
-                const pub = state.pubs[i];
-                if (pub && pub.revealed) {
-                    const avg = getAverage(pub);
-                    card.classList.add('revealed');
-                    card.innerHTML = `
-                        <div class="text-2xl mb-1">🥂</div>
-                        <h4 class="font-black italic uppercase text-xs text-white">${PUB_NAMES[i]}</h4>
-                        <div class="mt-2 px-3 py-1 bg-yellow-500/20 rounded-full border border-yellow-500/30">
-                            <span class="text-[10px] font-black text-yellow-500">${avg > 0 ? 'SCORE: ' + avg : 'INVULLEN'}</span>
-                        </div>
-                    `;
-                } else {
-                    card.classList.remove('revealed');
-                    card.innerHTML = `
-                        <div class="text-3xl mb-1 opacity-20">?</div>
-                        <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop ${i+1}</h4>
-                    `;
-                }
-            }
         }
 
         function handleCardClick(id) {
             if (state.pubs[id] && state.pubs[id].revealed) {
-                if (!state.pubs[id].arrival) {
-                    state.pubs[id].arrival = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    saveToFirebase();
-                }
                 switchToDetail(id);
             } else {
                 startReveal(id);
@@ -296,17 +368,25 @@
             const name = document.getElementById('reveal-name');
             const icon = document.getElementById('reveal-icon');
             const subtitle = document.getElementById('reveal-subtitle');
+            const progressCont = document.getElementById('reveal-progress-container');
+            const routeBox = document.getElementById('reveal-route-box');
+            const routeText = document.getElementById('reveal-route-text');
+            const addressText = document.getElementById('reveal-address-text');
+            const closeBtn = document.getElementById('close-reveal-btn');
             
             overlay.classList.remove('hidden');
+            routeBox.classList.add('hidden');
+            closeBtn.classList.add('hidden');
+            progressCont.classList.remove('hidden');
+            
             name.innerText = "Spanning stijgt...";
             icon.innerText = "⏳";
             subtitle.innerText = "Onze volgende stop wordt...";
             bar.style.transition = 'none';
             bar.style.width = '0%';
 
-            // Audio afspelen
             drumrollAudio.currentTime = 0;
-            drumrollAudio.play().catch(e => console.log("Drumroll audio play error:", e));
+            drumrollAudio.play().catch(() => {});
 
             setTimeout(() => {
                 bar.style.transition = 'width 3s linear';
@@ -316,38 +396,44 @@
             setTimeout(() => {
                 drumrollAudio.pause();
                 applauseAudio.currentTime = 0;
-                applauseAudio.play().catch(e => console.log("Applause audio play error:", e));
+                applauseAudio.play().catch(() => {});
                 
-                // Confetti effect
-                confetti({
-                    particleCount: 150,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: ['#f59e0b', '#ec4899', '#3b82f6']
-                });
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
 
-                icon.innerText = "🍻";
-                subtitle.innerText = "BIER HIER!";
-                name.innerText = PUB_NAMES[id];
+                icon.innerText = PUB_DATA[id].icon || "🍻";
+                subtitle.innerText = id === 5 ? "DE WILDCARD!" : "BIER HIER!";
+                name.innerText = PUB_DATA[id].name;
+                
+                addressText.innerText = PUB_DATA[id].address;
+                routeText.innerText = PUB_DATA[id].route;
+                routeBox.classList.remove('hidden');
+                progressCont.classList.add('hidden');
+                closeBtn.classList.remove('hidden');
 
-                setTimeout(() => {
-                    overlay.classList.add('hidden');
-                    state.pubs[id] = {
-                        revealed: true,
-                        arrival: null,
-                        scores: { glass:0, vibe:0, drinks:0, snacks:0, wow:0 },
-                        drinks: {},
-                        drinkDetails: {},
-                        wildcardScore: 0
-                    };
-                    updateAllCards();
-                    saveToFirebase();
-                }, 2500);
+                state.pubs[id] = {
+                    revealed: true,
+                    arrival: null,
+                    scores: { glass:0, vibe:0, drinks:0, snacks:0, wow:0 },
+                    drinks: {},
+                    drinkDetails: {},
+                    wildcardScore: 0,
+                    wildcardName: id === 5 ? "" : PUB_DATA[id].name
+                };
+                updateAllCards();
+                saveToFirebase();
             }, 3000);
+        }
+
+        function closeReveal() {
+            document.getElementById('reveal-overlay').classList.add('hidden');
         }
 
         function switchToDetail(id) {
             state.currentPubId = id;
+            if (!state.pubs[id].arrival) {
+                state.pubs[id].arrival = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                saveToFirebase();
+            }
             document.getElementById('view-grid').classList.add('hidden-view');
             document.getElementById('main-header').classList.add('hidden-view');
             document.getElementById('view-detail').classList.remove('hidden-view');
@@ -364,10 +450,25 @@
         }
 
         function renderDetail(id) {
-            const pub = state.pubs[id] || { scores: {}, drinks: {}, drinkDetails: {} };
-            document.getElementById('detail-pub-name').innerText = PUB_NAMES[id];
+            const pub = state.pubs[id] || {};
+            const isWildcard = (id === 5);
+            
+            const nameEl = document.getElementById('detail-pub-name');
+            const inputCont = document.getElementById('wildcard-name-input-container');
+            const inputField = document.getElementById('detail-pub-name-input');
+            
+            if (isWildcard) {
+                nameEl.classList.add('hidden');
+                inputCont.classList.remove('hidden');
+                inputField.value = pub.wildcardName || "";
+            } else {
+                nameEl.classList.remove('hidden');
+                inputCont.classList.add('hidden');
+                nameEl.innerText = PUB_DATA[id].name;
+            }
+
             document.getElementById('detail-time').innerText = pub.arrival || '--:--';
-            document.getElementById('wildcard-name').value = pub.wildcardName || '';
+            document.getElementById('wildcard-comment').value = pub.wildcardComment || '';
 
             const scoreCont = document.getElementById('score-container');
             scoreCont.innerHTML = '';
@@ -375,7 +476,6 @@
                 const div = document.createElement('div');
                 const face = PERSON_FACES[(id + idx) % PERSON_FACES.length];
                 const currentVal = pub.scores[cat.id] || 0;
-
                 div.innerHTML = `
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-[10px] font-black uppercase text-slate-400">${cat.label}</span>
@@ -407,21 +507,13 @@
             DRINK_TYPES.forEach(drink => {
                 const count = pub.drinks[drink.id] || 0;
                 const details = pub.drinkDetails ? (pub.drinkDetails[drink.id] || []) : [];
-                
                 const div = document.createElement('div');
                 div.className = "space-y-2";
-                
                 let inputsHtml = "";
+                const article = drink.article || 'Welke';
                 for(let i = 0; i < count; i++) {
-                    inputsHtml += `
-                        <input type="text" 
-                               placeholder="Welke ${drink.label.toLowerCase()}?" 
-                               value="${details[i] || ''}" 
-                               onchange="updateDrinkText('${drink.id}', ${i}, this.value)"
-                               class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-500/50">
-                    `;
+                    inputsHtml += `<input type="text" placeholder="${article} ${drink.label.toLowerCase()}?" value="${details[i] || ''}" onchange="updateDrinkText('${drink.id}', ${i}, this.value)" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-500/50">`;
                 }
-
                 div.innerHTML = `
                     <div class="flex items-center justify-between glass px-4 py-3">
                         <div class="flex items-center gap-3">
@@ -434,12 +526,16 @@
                             <button onclick="setDrink('${drink.id}', 1)" class="w-8 h-8 rounded-lg bg-yellow-500 text-black font-black">+</button>
                         </div>
                     </div>
-                    <div class="space-y-1 pl-4">
-                        ${inputsHtml}
-                    </div>
+                    <div class="space-y-1 pl-4">${inputsHtml}</div>
                 `;
                 drinkCont.appendChild(div);
             });
+        }
+
+        function updateWildcardName(val) {
+            if (state.currentPubId === 5) {
+                state.pubs[5].wildcardName = val;
+            }
         }
 
         function setScore(catId, val) {
@@ -453,37 +549,69 @@
             const pub = state.pubs[state.currentPubId];
             if (!pub.drinks) pub.drinks = {};
             if (!pub.drinkDetails) pub.drinkDetails = {};
-            
             const current = pub.drinks[drinkId] || 0;
             const newVal = Math.max(0, current + delta);
             pub.drinks[drinkId] = newVal;
-            
             if (!pub.drinkDetails[drinkId]) pub.drinkDetails[drinkId] = [];
-            if (delta > 0) {
-                pub.drinkDetails[drinkId].push("");
-            } else if (delta < 0 && pub.drinkDetails[drinkId].length > 0) {
-                pub.drinkDetails[drinkId].pop();
-            }
-            
+            if (delta > 0) pub.drinkDetails[drinkId].push("");
+            else if (delta < 0 && pub.drinkDetails[drinkId].length > 0) pub.drinkDetails[drinkId].pop();
             renderDetail(state.currentPubId);
         }
 
         function updateDrinkText(drinkId, index, val) {
-            const pub = state.pubs[state.currentPubId];
-            if (!pub.drinkDetails[drinkId]) pub.drinkDetails[drinkId] = [];
-            pub.drinkDetails[drinkId][index] = val;
+            state.pubs[state.currentPubId].drinkDetails[drinkId][index] = val;
         }
 
         function saveCurrentPub() {
             const pub = state.pubs[state.currentPubId];
-            pub.wildcardName = document.getElementById('wildcard-name').value;
+            pub.wildcardComment = document.getElementById('wildcard-comment').value;
+            
+            const avg = getAverage(pub);
+            showScorePopup(pub, avg);
+            
             saveToFirebase();
+        }
+
+        function showScorePopup(pub, avg) {
+            const popup = document.getElementById('score-popup');
+            const nameEl = document.getElementById('score-pub-name');
+            const valEl = document.getElementById('score-value');
+            const emojiEl = document.getElementById('score-emoji');
+            const msgEl = document.getElementById('score-message');
+            
+            const displayName = (state.currentPubId === 5 && pub.wildcardName) ? pub.wildcardName : PUB_DATA[state.currentPubId].name;
+            nameEl.innerText = displayName;
+            valEl.innerText = avg;
+            
+            popup.classList.remove('hidden');
+            
+            if (avg >= 7) {
+                emojiEl.innerText = "🌟";
+                msgEl.innerText = "Wauw! Wat een top-kroeg! Hier komen we vaker.";
+                applauseAudio.currentTime = 0;
+                applauseAudio.play().catch(() => {});
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            } else if (avg >= 5) {
+                emojiEl.innerText = "🤔";
+                msgEl.innerText = "Tsja... niet verkeerd, maar ook geen uitschieter.";
+                mediumAudio.currentTime = 0;
+                mediumAudio.play().catch(() => {});
+            } else {
+                emojiEl.innerText = "🤮";
+                msgEl.innerText = "Oei... snel door naar de volgende stop.";
+                badAudio.currentTime = 0;
+                badAudio.play().catch(() => {});
+            }
+        }
+
+        function closeScorePopup() {
+            document.getElementById('score-popup').classList.add('hidden');
             showGrid();
         }
 
         function saveToFirebase() {
             if (tourDocRef) {
-                tourDocRef.set({ pubs: state.pubs }, { merge: true }).catch(e => console.error("Save error:", e));
+                tourDocRef.set({ pubs: state.pubs }, { merge: true });
             }
         }
 
