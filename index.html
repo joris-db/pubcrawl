@@ -5,16 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>De Grote DD Pub Crawl</title>
     
-    <!-- PWA / App Instellingen -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="DD PubCrawl">
-    <link rel="apple-touch-icon" href="appfoto.jpg">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -106,35 +107,29 @@
             <p class="text-slate-400 text-[10px] font-bold tracking-[0.2em] mt-2 uppercase opacity-80">Wie kotst het eerst?</p>
         </header>
 
-        <!-- Grid View (Nu direct in HTML voor maximale laad-zekerheid) -->
+        <!-- Grid View -->
         <div id="view-grid" class="space-y-6">
             <div class="grid grid-cols-2 gap-4" id="pub-grid">
-                <!-- Kroeg 1 -->
                 <div class="pub-card glass" id="card-0" onclick="handleCardClick(0)">
                     <div class="text-3xl mb-1 opacity-20">?</div>
                     <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 1</h4>
                 </div>
-                <!-- Kroeg 2 -->
                 <div class="pub-card glass" id="card-1" onclick="handleCardClick(1)">
                     <div class="text-3xl mb-1 opacity-20">?</div>
                     <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 2</h4>
                 </div>
-                <!-- Kroeg 3 -->
                 <div class="pub-card glass" id="card-2" onclick="handleCardClick(2)">
                     <div class="text-3xl mb-1 opacity-20">?</div>
                     <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 3</h4>
                 </div>
-                <!-- Kroeg 4 -->
                 <div class="pub-card glass" id="card-3" onclick="handleCardClick(3)">
                     <div class="text-3xl mb-1 opacity-20">?</div>
                     <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 4</h4>
                 </div>
-                <!-- Kroeg 5 -->
                 <div class="pub-card glass" id="card-4" onclick="handleCardClick(4)">
                     <div class="text-3xl mb-1 opacity-20">?</div>
                     <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 5</h4>
                 </div>
-                <!-- Kroeg 6 -->
                 <div class="pub-card glass" id="card-5" onclick="handleCardClick(5)">
                     <div class="text-3xl mb-1 opacity-20">?</div>
                     <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop 6</h4>
@@ -180,15 +175,23 @@
 
     <!-- Reveal Overlay -->
     <div id="reveal-overlay" class="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-50 hidden p-6 text-center">
-        <div class="text-8xl mb-6">🍻</div>
-        <h3 class="text-sm font-bold text-yellow-500 tracking-widest uppercase mb-2">Bestemming onthuld:</h3>
-        <h2 class="text-4xl font-black text-white italic uppercase" id="reveal-name">---</h2>
+        <div id="reveal-icon" class="text-8xl mb-6">🥁</div>
+        <h3 id="reveal-subtitle" class="text-sm font-bold text-yellow-500 tracking-widest uppercase mb-2">Moment geduld...</h3>
+        <h2 class="text-4xl font-black text-white italic uppercase" id="reveal-name">Tromgeroffel...</h2>
         <div class="mt-12 w-48 h-1 bg-white/10 rounded-full overflow-hidden">
-            <div id="reveal-bar" class="h-full bg-yellow-500 transition-all duration-[1.5s]" style="width: 0%"></div>
+            <div id="reveal-bar" class="h-full bg-yellow-500 transition-all duration-[3s] ease-linear" style="width: 0%"></div>
         </div>
     </div>
 
     <script>
+        // AUDIO RESOURCES
+        // Jouw geüploade suspense link van GitHub
+        const drumrollAudio = new Audio('https://github.com/joris-db/pubcrawl/raw/refs/heads/main/drumroll.mp3'); 
+        drumrollAudio.preload = "auto";
+        
+        const applauseAudio = new Audio('https://www.soundjay.com/human/sounds/applause-01.mp3');
+        applauseAudio.preload = "auto";
+
         // CONFIGURATIE
         const PERSON_FACES = ['persoon1.png', 'persoon2.png', 'persoon3.png', 'persoon4.png'];
         const PUB_NAMES = ["Kroeg 1", "Kroeg 2", "Kroeg 3", "Kroeg 4", "Kroeg 5", "Kroeg 6"];
@@ -212,11 +215,7 @@
         let db = null;
         let tourDocRef = null;
 
-        // INITIALISATIE
         function init() {
-            console.log("App start...");
-            
-            // Probeer Firebase te laden, maar ga door als het faalt
             try {
                 if (typeof __firebase_config !== 'undefined') {
                     const config = JSON.parse(__firebase_config);
@@ -232,27 +231,48 @@
                                 updateAllCards();
                                 if (state.currentPubId !== null) renderDetail(state.currentPubId);
                             }
-                        });
+                        }, err => console.error("Snapshot error:", err));
                     });
                 }
             } catch (e) {
-                console.warn("Firebase niet actief, app draait lokaal.");
+                console.warn("Firebase niet actief.");
             }
-
             updateAllCards();
         }
 
-        // UI FUNCTIES
+        function getAverage(pub) {
+            if (!pub || !pub.scores) return 0;
+            let scores = Object.values(pub.scores).filter(v => v > 0);
+            let sum = scores.reduce((a, b) => a + b, 0);
+            let count = scores.length;
+            
+            if (pub.wildcardScore && pub.wildcardScore > 0) {
+                sum += pub.wildcardScore;
+                count += 1;
+            }
+            
+            return count > 0 ? (sum / count).toFixed(1) : 0;
+        }
+
         function updateAllCards() {
             for (let i = 0; i < 6; i++) {
                 const card = document.getElementById(`card-${i}`);
                 const pub = state.pubs[i];
                 if (pub && pub.revealed) {
+                    const avg = getAverage(pub);
                     card.classList.add('revealed');
                     card.innerHTML = `
-                        <div class="text-2xl mb-2">🥂</div>
+                        <div class="text-2xl mb-1">🥂</div>
                         <h4 class="font-black italic uppercase text-xs text-white">${PUB_NAMES[i]}</h4>
-                        <div class="mt-2 text-[9px] text-yellow-500 font-bold uppercase">Bekijken →</div>
+                        <div class="mt-2 px-3 py-1 bg-yellow-500/20 rounded-full border border-yellow-500/30">
+                            <span class="text-[10px] font-black text-yellow-500">${avg > 0 ? 'SCORE: ' + avg : 'INVULLEN'}</span>
+                        </div>
+                    `;
+                } else {
+                    card.classList.remove('revealed');
+                    card.innerHTML = `
+                        <div class="text-3xl mb-1 opacity-20">?</div>
+                        <h4 class="font-black text-[10px] text-slate-500 uppercase tracking-widest">Stop ${i+1}</h4>
                     `;
                 }
             }
@@ -260,6 +280,10 @@
 
         function handleCardClick(id) {
             if (state.pubs[id] && state.pubs[id].revealed) {
+                if (!state.pubs[id].arrival) {
+                    state.pubs[id].arrival = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    saveToFirebase();
+                }
                 switchToDetail(id);
             } else {
                 startReveal(id);
@@ -270,29 +294,56 @@
             const overlay = document.getElementById('reveal-overlay');
             const bar = document.getElementById('reveal-bar');
             const name = document.getElementById('reveal-name');
+            const icon = document.getElementById('reveal-icon');
+            const subtitle = document.getElementById('reveal-subtitle');
             
             overlay.classList.remove('hidden');
-            name.innerText = "KROEG " + (id + 1);
+            name.innerText = "Spanning stijgt...";
+            icon.innerText = "⏳";
+            subtitle.innerText = "Onze volgende stop wordt...";
+            bar.style.transition = 'none';
             bar.style.width = '0%';
 
-            setTimeout(() => bar.style.width = '100%', 100);
+            // Audio afspelen
+            drumrollAudio.currentTime = 0;
+            drumrollAudio.play().catch(e => console.log("Drumroll audio play error:", e));
 
             setTimeout(() => {
+                bar.style.transition = 'width 3s linear';
+                bar.style.width = '100%';
+            }, 50);
+
+            setTimeout(() => {
+                drumrollAudio.pause();
+                applauseAudio.currentTime = 0;
+                applauseAudio.play().catch(e => console.log("Applause audio play error:", e));
+                
+                // Confetti effect
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#f59e0b', '#ec4899', '#3b82f6']
+                });
+
+                icon.innerText = "🍻";
+                subtitle.innerText = "BIER HIER!";
                 name.innerText = PUB_NAMES[id];
+
                 setTimeout(() => {
                     overlay.classList.add('hidden');
                     state.pubs[id] = {
                         revealed: true,
-                        arrival: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        scores: {},
+                        arrival: null,
+                        scores: { glass:0, vibe:0, drinks:0, snacks:0, wow:0 },
                         drinks: {},
+                        drinkDetails: {},
                         wildcardScore: 0
                     };
                     updateAllCards();
-                    switchToDetail(id);
                     saveToFirebase();
-                }, 1500);
-            }, 1500);
+                }, 2500);
+            }, 3000);
         }
 
         function switchToDetail(id) {
@@ -313,12 +364,11 @@
         }
 
         function renderDetail(id) {
-            const pub = state.pubs[id] || { scores: {}, drinks: {} };
+            const pub = state.pubs[id] || { scores: {}, drinks: {}, drinkDetails: {} };
             document.getElementById('detail-pub-name').innerText = PUB_NAMES[id];
             document.getElementById('detail-time').innerText = pub.arrival || '--:--';
             document.getElementById('wildcard-name').value = pub.wildcardName || '';
 
-            // Scores
             const scoreCont = document.getElementById('score-container');
             scoreCont.innerHTML = '';
             SCORE_CATEGORIES.forEach((cat, idx) => {
@@ -341,7 +391,6 @@
                 scoreCont.appendChild(div);
             });
 
-            // Wildcard Rating
             const wcFace = PERSON_FACES[(id + 5) % PERSON_FACES.length];
             const wcVal = pub.wildcardScore || 0;
             document.getElementById('wildcard-rating').innerHTML = `
@@ -353,29 +402,46 @@
                 </div>
             `;
 
-            // Drinks
             const drinkCont = document.getElementById('drinks-container');
             drinkCont.innerHTML = '';
             DRINK_TYPES.forEach(drink => {
                 const count = pub.drinks[drink.id] || 0;
+                const details = pub.drinkDetails ? (pub.drinkDetails[drink.id] || []) : [];
+                
                 const div = document.createElement('div');
-                div.className = "flex items-center justify-between glass px-4 py-3";
+                div.className = "space-y-2";
+                
+                let inputsHtml = "";
+                for(let i = 0; i < count; i++) {
+                    inputsHtml += `
+                        <input type="text" 
+                               placeholder="Welke ${drink.label.toLowerCase()}?" 
+                               value="${details[i] || ''}" 
+                               onchange="updateDrinkText('${drink.id}', ${i}, this.value)"
+                               class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-500/50">
+                    `;
+                }
+
                 div.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <span class="text-xl">${drink.icon}</span>
-                        <span class="font-black text-[10px] uppercase">${drink.label}</span>
+                    <div class="flex items-center justify-between glass px-4 py-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xl">${drink.icon}</span>
+                            <span class="font-black text-[10px] uppercase">${drink.label}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="setDrink('${drink.id}', -1)" class="w-8 h-8 rounded-lg bg-white/5 border border-white/10">-</button>
+                            <span class="font-black text-lg w-6 text-center">${count}</span>
+                            <button onclick="setDrink('${drink.id}', 1)" class="w-8 h-8 rounded-lg bg-yellow-500 text-black font-black">+</button>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <button onclick="setDrink('${drink.id}', -1)" class="w-8 h-8 rounded-lg bg-white/5 border border-white/10">-</button>
-                        <span class="font-black text-lg w-6 text-center">${count}</span>
-                        <button onclick="setDrink('${drink.id}', 1)" class="w-8 h-8 rounded-lg bg-yellow-500 text-black font-black">+</button>
+                    <div class="space-y-1 pl-4">
+                        ${inputsHtml}
                     </div>
                 `;
                 drinkCont.appendChild(div);
             });
         }
 
-        // DATA FUNCTIES
         function setScore(catId, val) {
             const pub = state.pubs[state.currentPubId];
             if (catId === 'wildcardScore') pub.wildcardScore = val;
@@ -385,9 +451,27 @@
 
         function setDrink(drinkId, delta) {
             const pub = state.pubs[state.currentPubId];
+            if (!pub.drinks) pub.drinks = {};
+            if (!pub.drinkDetails) pub.drinkDetails = {};
+            
             const current = pub.drinks[drinkId] || 0;
-            pub.drinks[drinkId] = Math.max(0, current + delta);
+            const newVal = Math.max(0, current + delta);
+            pub.drinks[drinkId] = newVal;
+            
+            if (!pub.drinkDetails[drinkId]) pub.drinkDetails[drinkId] = [];
+            if (delta > 0) {
+                pub.drinkDetails[drinkId].push("");
+            } else if (delta < 0 && pub.drinkDetails[drinkId].length > 0) {
+                pub.drinkDetails[drinkId].pop();
+            }
+            
             renderDetail(state.currentPubId);
+        }
+
+        function updateDrinkText(drinkId, index, val) {
+            const pub = state.pubs[state.currentPubId];
+            if (!pub.drinkDetails[drinkId]) pub.drinkDetails[drinkId] = [];
+            pub.drinkDetails[drinkId][index] = val;
         }
 
         function saveCurrentPub() {
