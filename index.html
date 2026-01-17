@@ -188,8 +188,8 @@
         const drumrollAudio = new Audio('https://www.soundjay.com/misc/sounds/drum-roll-01.mp3');
         const applauseAudio = new Audio('https://www.soundjay.com/human/sounds/applause-01.mp3');
 
-        // Foto configuratie
-        const PERSON_FACES = ['persoon1.jpg', 'persoon2.jpg', 'persoon3.jpg', 'persoon4.jpg'];
+        // Foto configuratie: Let op de .png extensie!
+        const PERSON_FACES = ['persoon1.png', 'persoon2.png', 'persoon3.png', 'persoon4.png'];
 
         const PUB_NAMES = ["Kroeg 1", "Kroeg 2", "Kroeg 3", "Kroeg 4", "Kroeg 5", "Kroeg 6"];
         const SCORE_CATEGORIES = [
@@ -212,6 +212,10 @@
         const tourDocRef = db.doc(`artifacts/${appId}/public/data/tourData/currentTour`);
 
         async function init() {
+            // FIX: Render direct, zodat je altijd beeld hebt, zelfs bij trage verbinding/fout
+            renderGrid();
+            createParticles();
+
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await auth.signInWithCustomToken(__initial_auth_token);
@@ -220,15 +224,18 @@
                 }
                 tourDocRef.onSnapshot((doc) => {
                     if (doc.exists) state.pubs = doc.data().pubs || {};
-                    renderGrid();
+                    renderGrid(); // Update het grid opnieuw als er data is
                     if (state.currentPubId !== null) renderDetail(state.currentPubId);
                 });
-                createParticles();
-            } catch (e) { console.error("Init failed:", e); }
+            } catch (e) { 
+                console.error("Init failed (waarschijnlijk auth probleem):", e); 
+                // Zelfs bij een fout blijft het grid nu staan!
+            }
         }
 
         function renderGrid() {
             const grid = document.getElementById('pub-grid');
+            if (!grid) return;
             grid.innerHTML = '';
             for (let i = 0; i < 6; i++) {
                 const pub = state.pubs[i];
@@ -255,7 +262,6 @@
             let label = isWildcard ? "Wildcard Score" : SCORE_CATEGORIES.find(c => c.id === catId)?.label || catId;
             
             // Bepaal welke foto voor dit onderdeel wordt gebruikt
-            // Gebruik (pubIndex + catIndex) om elke kroeg met een andere foto te starten
             const faceIndex = (pubIndex + catIndex) % PERSON_FACES.length;
             const faceUrl = PERSON_FACES[faceIndex];
 
