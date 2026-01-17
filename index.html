@@ -113,6 +113,11 @@
     <div class="mesh-bg"></div>
     <div id="particles-container"></div>
 
+    <!-- NOODKNOP / DEBUG KNOP -->
+    <button onclick="forceDebugStart()" class="fixed bottom-4 right-4 z-[100] bg-red-600/90 text-white px-4 py-3 rounded-full shadow-2xl font-bold text-xs border border-white/20 hover:bg-red-500 transition active:scale-95 flex items-center gap-2">
+        <span>🛠️ NOODKNOP: FORCEER START</span>
+    </button>
+
     <main class="max-w-xl mx-auto p-6 min-h-screen relative z-10 flex flex-col">
         <header id="main-header" class="text-center py-8 mb-4 transition-all shrink-0">
             <h1 class="text-3xl font-black italic tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 uppercase leading-tight">
@@ -122,7 +127,11 @@
         </header>
 
         <div id="view-grid" class="space-y-6 flex-grow">
-            <div class="grid grid-cols-2 gap-4" id="pub-grid"></div>
+            <!-- Grid container met minimale hoogte zodat hij zeker ruimte inneemt -->
+            <div class="grid grid-cols-2 gap-4 min-h-[200px]" id="pub-grid">
+                <!-- Fallback tekst als JS faalt -->
+                <div class="col-span-2 text-center text-slate-500 text-xs animate-pulse mt-10">Laden van kroegen...</div>
+            </div>
             
             <div id="reveal-overlay" class="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-50 hidden p-6 text-center">
                 <div class="text-8xl mb-6">🍻</div>
@@ -188,7 +197,6 @@
         const drumrollAudio = new Audio('https://www.soundjay.com/misc/sounds/drum-roll-01.mp3');
         const applauseAudio = new Audio('https://www.soundjay.com/human/sounds/applause-01.mp3');
 
-        // Foto configuratie: Let op de .png extensie!
         const PERSON_FACES = ['persoon1.png', 'persoon2.png', 'persoon3.png', 'persoon4.png'];
 
         const PUB_NAMES = ["Kroeg 1", "Kroeg 2", "Kroeg 3", "Kroeg 4", "Kroeg 5", "Kroeg 6"];
@@ -212,7 +220,7 @@
         const tourDocRef = db.doc(`artifacts/${appId}/public/data/tourData/currentTour`);
 
         async function init() {
-            // FIX: Render direct, zodat je altijd beeld hebt, zelfs bij trage verbinding/fout
+            // Render direct leeg grid om te voorkomen dat scherm leeg blijft
             renderGrid();
             createParticles();
 
@@ -224,13 +232,35 @@
                 }
                 tourDocRef.onSnapshot((doc) => {
                     if (doc.exists) state.pubs = doc.data().pubs || {};
-                    renderGrid(); // Update het grid opnieuw als er data is
+                    renderGrid();
                     if (state.currentPubId !== null) renderDetail(state.currentPubId);
                 });
             } catch (e) { 
-                console.error("Init failed (waarschijnlijk auth probleem):", e); 
-                // Zelfs bij een fout blijft het grid nu staan!
+                console.error("Init failed:", e);
+                // Bij fout: toch grid renderen
+                renderGrid();
             }
+        }
+
+        // --- NOODKNOP FUNCTIE ---
+        function forceDebugStart() {
+            // Forceer dummy data voor kroeg 1
+            if (!state.pubs[0]) {
+                state.pubs[0] = {
+                    revealed: true,
+                    arrival: '12:00',
+                    scores: { glass:5, vibe:5, drinks:5, snacks:5, wow:5 },
+                    drinks: {},
+                    drinkDetails: {},
+                    wildcardName: '', wildcardScore: 0, notes: ''
+                };
+            }
+            state.pubs[0].revealed = true; // Zeker weten dat hij open is
+            
+            // Forceer render en switch
+            console.log("Forcing debug start...");
+            renderGrid(); // Update grid state
+            switchToDetail(0); // Ga naar detail
         }
 
         function renderGrid() {
@@ -257,11 +287,8 @@
             }
         }
 
-        // Nieuwe rating functie met gezichten
         function createFaceRating(catId, currentVal, targetEl, pubIndex, catIndex, isWildcard = false) {
             let label = isWildcard ? "Wildcard Score" : SCORE_CATEGORIES.find(c => c.id === catId)?.label || catId;
-            
-            // Bepaal welke foto voor dit onderdeel wordt gebruikt
             const faceIndex = (pubIndex + catIndex) % PERSON_FACES.length;
             const faceUrl = PERSON_FACES[faceIndex];
 
@@ -291,14 +318,11 @@
             const scoreCont = document.getElementById('score-container');
             scoreCont.innerHTML = '';
             
-            // Per kroeg (id) en categorie (index) bepalen we de foto
             SCORE_CATEGORIES.forEach((cat, index) => {
                 const row = document.createElement('div');
                 createFaceRating(cat.id, pub.scores?.[cat.id] || 0, row, parseInt(id), index);
                 scoreCont.appendChild(row);
             });
-            
-            // Wildcard krijgt de volgende foto in de rij
             createFaceRating('wildcardScore', pub.wildcardScore || 0, document.getElementById('wildcard-rating'), parseInt(id), SCORE_CATEGORIES.length, true);
 
             const drinkCont = document.getElementById('drinks-container');
@@ -362,7 +386,6 @@
                 drumrollAudio.pause();
                 applauseAudio.currentTime = 0;
                 applauseAudio.play().catch(e => console.log("Audio play blocked"));
-
                 if ('vibrate' in navigator) navigator.vibrate([100, 50, 200]);
 
                 setTimeout(async () => {
